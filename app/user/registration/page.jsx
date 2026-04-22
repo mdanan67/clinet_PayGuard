@@ -1,11 +1,12 @@
 'use client';
-
 import Navbar from '@/Pages/Navbar/Navbar';
+import axios from 'axios';
 import { useState } from 'react';
 
 export default function ParentRegistration() {
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -23,7 +24,8 @@ export default function ParentRegistration() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
@@ -33,8 +35,10 @@ export default function ParentRegistration() {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password)) {
+      newErrors.password = 'Must include uppercase, lowercase, number & special character (@$!%*?&)';
     }
 
     if (!formData.confirmPassword) {
@@ -58,33 +62,41 @@ export default function ParentRegistration() {
     try {
       setLoading(true);
 
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        }),
+      const response = await axios.post('http://localhost:5080/api/User/registation', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({ api: data.message || 'Registration failed' });
-        return;
-      }
+      console.log(response.data);
 
       setSuccessMessage('Account created successfully');
       setFormData({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: '',
         confirmPassword: '',
       });
       setErrors({});
-    } catch {
-      setErrors({ api: 'Something went wrong. Please try again.' });
+    } catch (error) {
+      console.log('Full error:', error.response?.data);
+
+      // .NET returns field errors under error.response.data.errors
+      const backendErrors = error.response?.data?.errors;
+      if (backendErrors) {
+        // Map .NET PascalCase field names → camelCase to match form field names
+        const mapped = {};
+        Object.entries(backendErrors).forEach(([field, messages]) => {
+          const key = field.charAt(0).toLowerCase() + field.slice(1);
+          mapped[key] = messages[0];
+        });
+        setErrors(mapped);
+      } else {
+        const message = error.response?.data?.message || 'Something went wrong. Please try again.';
+        setErrors({ api: message });
+      }
     } finally {
       setLoading(false);
     }
@@ -96,13 +108,15 @@ export default function ParentRegistration() {
 
       <div className="flex items-center justify-center px-4 py-16">
         <div className="grid w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-xl md:grid-cols-2">
-          <div className="flex flex-col justify-center bg-slate-900 p-10 text-white">
+
+          {/* Left panel — hidden on mobile, visible md+ */}
+          <div className="hidden md:flex flex-col justify-center bg-slate-900 p-10 text-white">
             <span className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1 text-sm">
               Parent Account
             </span>
 
             <h1 className="mb-4 text-4xl font-bold leading-tight">
-              Take control of your child’s spending
+              Take control of your child's spending
             </h1>
 
             <p className="mb-8 text-slate-300">
@@ -114,7 +128,7 @@ export default function ParentRegistration() {
               <div className="rounded-xl bg-white/10 p-4">
                 <h3 className="font-semibold">Quick setup</h3>
                 <p className="text-sm text-slate-300">
-                  Get started in seconds and begin managing your child’s spending right away.
+                  Get started in seconds and begin managing your child's spending right away.
                 </p>
               </div>
 
@@ -134,55 +148,88 @@ export default function ParentRegistration() {
             </div>
           </div>
 
+          {/* Right panel — form */}
           <div className="p-8 md:p-10">
             <div className="mx-auto max-w-md">
               <h2 className="text-3xl font-bold text-slate-900">Create your account</h2>
               <p className="mt-2 text-slate-500">
-                Sign up as a parent to start managing and controlling your child’s spending.
+                Sign up as a parent to start managing and controlling your child's spending.
               </p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="Full Name"
-                  className="w-full rounded-xl border px-4 py-3"
-                />
-                {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
 
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email Address"
-                  className="w-full rounded-xl border px-4 py-3"
-                />
-                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+                {/* First Name + Last Name — side by side */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="First Name"
+                      className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    />
+                    {errors.firstName && (
+                      <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="Last Name"
+                      className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    />
+                    {errors.lastName && (
+                      <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
+                    )}
+                  </div>
+                </div>
 
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Password"
-                  className="w-full rounded-xl border px-4 py-3"
-                />
-                {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+                {/* Email — full width */}
+                <div>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email Address"
+                    className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                  {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                </div>
 
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm Password"
-                  className="w-full rounded-xl border px-4 py-3"
-                />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">{errors.confirmPassword}</p>
-                )}
+                {/* Password — full width */}
+                <div>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Password"
+                    className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                  )}
+                </div>
+
+                {/* Confirm Password — full width */}
+                <div>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirm Password"
+                    className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+                  )}
+                </div>
 
                 {errors.api && <p className="text-sm text-red-500">{errors.api}</p>}
                 {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
@@ -190,7 +237,7 @@ export default function ParentRegistration() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-slate-900 py-3 text-white"
+                  className="w-full rounded-xl bg-slate-900 py-3 text-white transition hover:bg-slate-700 disabled:opacity-60"
                 >
                   {loading ? 'Creating...' : 'Create Account'}
                 </button>
@@ -198,12 +245,13 @@ export default function ParentRegistration() {
 
               <p className="mt-6 text-center text-sm text-slate-500">
                 Already have an account?{' '}
-                <a href="/user/login" className="font-medium">
+                <a href="/user/login" className="font-medium text-slate-900 underline">
                   Login
                 </a>
               </p>
             </div>
           </div>
+
         </div>
       </div>
     </div>

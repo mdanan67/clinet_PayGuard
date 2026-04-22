@@ -1,6 +1,7 @@
 'use client';
 
 import Navbar from '@/Pages/Navbar/Navbar';
+import axios from 'axios';
 import { useState } from 'react';
 
 export default function ParentLogin() {
@@ -40,38 +41,33 @@ export default function ParentLogin() {
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage('');
+      console.log(formData);
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    try {
-      setLoading(true);
+try {
+  setLoading(true);
+  setErrors({});
+  setSuccessMessage('');
 
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+  const response = await axios.post("http://localhost:5080/api/User/login", {
+    email: formData.email,
+    password: formData.password
+  });
 
-      const data = await response.json();
+  const data = response.data;
+  console.log(data);
 
-      if (!response.ok) {
-        setErrors({ api: data.message || 'Login failed' });
-        return;
-      }
-
-      setSuccessMessage('Login successful');
-      setErrors({});
-
-      // Example redirect
-      // window.location.href = '/dashboard';
-    } catch {
-      setErrors({ api: 'Something went wrong. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
+  setErrors({});
+  setSuccessMessage('Login successful');
+} catch (error) {
+  setSuccessMessage('');
+  setErrors({
+    api: error.response?.data?.message || 'Login failed'
+  });
+} finally {
+  setLoading(false);
+}
   };
 
   return (
