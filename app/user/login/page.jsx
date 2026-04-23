@@ -1,10 +1,13 @@
 'use client';
 
 import Navbar from '@/Pages/Navbar/Navbar';
+import { STORAGE_KEY, normalizeRole } from '@/components/dashboard/dashboardConfig';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ParentLogin() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -35,39 +38,56 @@ export default function ParentLogin() {
     return newErrors;
   };
 
+  const getRoleFromResponse = (data) =>
+    normalizeRole(
+      data?.role ||
+        data?.user?.role ||
+        data?.data?.role ||
+        data?.result?.role
+    );
+
+  const buildStoredUser = (data) => {
+    const user = data?.user || data?.data?.user || {};
+
+    return {
+      role: getRoleFromResponse(data),
+      name: user.name || user.fullName || data?.name || formData.email.split('@')[0] || 'PayGuard User',
+      email: user.email || data?.email || formData.email,
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationErrors = validateForm();
     setErrors(validationErrors);
     setSuccessMessage('');
-      console.log(formData);
-
     if (Object.keys(validationErrors).length > 0) return;
 
-try {
-  setLoading(true);
-  setErrors({});
-  setSuccessMessage('');
+    try {
+      setLoading(true);
+      setErrors({});
+      setSuccessMessage('');
 
-  const response = await axios.post("http://localhost:5080/api/User/login", {
-    email: formData.email,
-    password: formData.password
-  });
+      const response = await axios.post('http://localhost:5080/api/User/login', {
+        email: formData.email,
+        password: formData.password,
+      });
 
-  const data = response.data;
-  console.log(data);
+      const userData = buildStoredUser(response.data);
 
-  setErrors({});
-  setSuccessMessage('Login successful');
-} catch (error) {
-  setSuccessMessage('');
-  setErrors({
-    api: error.response?.data?.message || 'Login failed'
-  });
-} finally {
-  setLoading(false);
-}
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+
+      setSuccessMessage('Login successful');
+      router.push('/dashboard');
+    } catch (error) {
+      setSuccessMessage('');
+      setErrors({
+        api: error.response?.data?.message || 'Login failed',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
