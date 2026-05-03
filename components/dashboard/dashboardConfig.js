@@ -14,7 +14,7 @@ export const dashboardConfig = {
   parent: {
     sidebarItems: [
       { label: 'Dashboard', href: '/dashboard', icon: 'grid' },
-      { label: 'Children', href: '/dashboard/children', icon: 'users' },
+      { label: 'Children', href: '/dashboard/child', icon: 'users' },
       { label: 'Message', href: '/dashboard/messages', icon: 'card' },
       { label: 'Ask Ai', href: '/dashboard/askai', icon: 'shield' },
       { label: 'Set Limit', href: '/dashboard/setlimit', icon: 'chart' },
