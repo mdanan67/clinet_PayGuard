@@ -8,8 +8,7 @@ export default function ParentBalance() {
   const [balance, setBalance] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
   const [addAmount, setAddAmount] = useState('');
-  const [loading] = useState(false);
-  const [token, setToken] = useState('');
+  const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
 const handleAddBalance = async () => {
@@ -19,39 +18,25 @@ const handleAddBalance = async () => {
   }
 
   try {
-    // const response = await fetch(
-    //   'http://localhost:5080/api/Payment/create-checkout-session',
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       Authorization: `Bearer ${jwtToken}`,
-    //     },
-    //     body: JSON.stringify({
-    //       amount: parseFloat(addAmount),
-    //     }),
-    //   }
-    // );
+    setLoading(true);
 
-    const response= await axios.post("http://localhost:5080/api/Payment/create-checkout-session",
-      {amount: parseFloat(addAmount),},{withCredentials:true})
+    const response = await axios.post(
+      'http://localhost:5080/api/Payment/create-checkout-session',
+      { amount: parseFloat(addAmount) },
+      { withCredentials: true }
+    );
 
-
-    const data = await response.json();
-
-    console.log(response);
-    
-
-    if (!response.ok) {
-      console.error('Backend error:', data);
-      alert(data.error || data.message || 'Failed to create payment session');
+    if (!response.data?.url) {
+      alert('Payment session URL was not returned');
       return;
     }
 
-    window.location.href = data.url;
+    window.location.href = response.data.url;
   } catch (error) {
     console.error('Stripe redirect error:', error);
-    alert(error.message || 'Something went wrong');
+    alert(error.response?.data?.error || error.response?.data?.message || 'Something went wrong');
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -61,13 +46,8 @@ const handleAddBalance = async () => {
       `Balance added successfully! New balance: $${response.newBalance.toFixed(2)}`
     );
     setAddAmount('');
-    setShowPaymentForm(false);
 
     setTimeout(() => setSuccessMessage(''), 3000);
-  };
-
-  const handlePaymentCancel = () => {
-    setShowPaymentForm(false);
   };
 
   return (

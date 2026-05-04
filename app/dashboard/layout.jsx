@@ -15,15 +15,16 @@ export default function DashboardRootLayout({ children }) {
 
     if (!savedUser) {
       router.replace('/user/login');
+      setLoading(false);
       return;
     }
 
     try {
       const parsedUser = JSON.parse(savedUser);
       setDashboardUser({
-        role: normalizeRole(parsedUser.role),
-        name: parsedUser.name || 'PayGuard User',
-        email: parsedUser.email || '',
+        role: normalizeRole(parsedUser.role || parsedUser.Role),
+        name: parsedUser.name || parsedUser.Name || 'PayGuard User',
+        email: parsedUser.email || parsedUser.Email || '',
       });
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);

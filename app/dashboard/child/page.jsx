@@ -1,24 +1,11 @@
 'use client'
 
 import axios from 'axios'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const Page = () => {
-  const [children, setChildren] = useState([
-    {
-      FirstName: 'John',
-      LastName: 'Doe',
-      BirthDate: '2015-05-12',
-      Email: 'john@example.com',
-      Gender: 'Male',
-      Spend: 250.5,
-      Balance: 500.0,
-    },
-  ])
-
   const [showForm, setShowForm] = useState(false)
-
-  const [allchild,setAllChild]=useState([]);
+  const [allchild, setAllChild] = useState([])
 
   const [formData, setFormData] = useState({
     FirstName: '',
@@ -38,37 +25,22 @@ const Page = () => {
       [name]: value,
     }))
   }
+  const getAllChild = useCallback(async () => {
+    try {
+      const child = await axios.get(
+        'http://localhost:5080/api/Parent/GetAllChil',
+        { withCredentials: true }
+      )
+      const childList = child.data?.allchildinquary || child.data?.allChildInquary || child.data || []
+      setAllChild(Array.isArray(childList) ? childList : [])
+    } catch (error) {
+      console.log(error)
+    }
+  }, [])
 
-useEffect(() => {
-  
-
-  return () => {
-
-    const GetAllChil=async()=>{
-         try {
-
-          const child= await axios.get("http://localhost:5080/api/Parent/GetAllChil",{withCredentials:true})
-
-          setAllChild(child.data.allchildinquary)
-          console.log(allchild);
-          
-          
-         
-           }
-            
-      catch (error) {
-    
-          }
-      }
-    GetAllChil();
-
-    
-  }
-}, [])
-console.log(allchild);
-
-
-
+  useEffect(() => {
+    getAllChild()
+  }, [getAllChild])
 
 const handleAddChild = async (e) => {
   e.preventDefault()
@@ -92,24 +64,20 @@ const handleAddChild = async (e) => {
   }
 
   try {
-    const user = await axios.post(
-      "http://localhost:5080/api/User/childRegistration",
+    await axios.post(
+      'http://localhost:5080/api/User/childRegistration',
       {
         firstName: formData.FirstName,
         lastName: formData.LastName,
         birthDate: formData.BirthDate,
         email: formData.Email,
         gender: formData.Gender,
-        password:formData.Password
+        password: formData.Password,
       },
       { withCredentials: true }
     )
 
-    if (user.status === 200 || user.status === 201) {
-      window.location.reload()
-    }
-
-    setChildren((prev) => [...prev, newChild])
+    await getAllChild()
 
     setFormData({
       FirstName: '',
@@ -148,12 +116,12 @@ const handleAddChild = async (e) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {allchild.map((child) => (
-          <div key={child.id} className="bg-white rounded-lg shadow p-6">
+          <div key={child.id || child.Id || child.Email || child.email} className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold">
-              {child.name} 
+              {child.name || child.Name || `${child.FirstName || ''} ${child.LastName || ''}`.trim() || 'Child'}
             </h2>
 
-            <p className="text-sm text-gray-500 mb-4">{child.Gender}</p>
+            <p className="text-sm text-gray-500 mb-4">{child.Gender || child.gender}</p>
 
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -172,10 +140,12 @@ const handleAddChild = async (e) => {
             </div>
 
             <div className="mt-4 text-sm">
-              <p>Email: {child.Email}</p>
+              <p>Email: {child.Email || child.email}</p>
               <p>
                 Birth Date:{' '}
-                {new Date(child.BirthDate).toLocaleDateString()}
+                {child.BirthDate || child.birthDate
+                  ? new Date(child.BirthDate || child.birthDate).toLocaleDateString()
+                  : 'N/A'}
               </p>
             </div>
           </div>
