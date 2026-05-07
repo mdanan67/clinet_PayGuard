@@ -6,6 +6,10 @@ import { useCallback, useEffect, useState } from 'react'
 const Page = () => {
   const [showForm, setShowForm] = useState(false)
   const [allchild, setAllChild] = useState([])
+  const [activeSendChildId, setActiveSendChildId] = useState(null)
+  const [sendAmounts, setSendAmounts] = useState({})
+
+  const formatAmount = (value) => Number(value ?? 0).toFixed(2)
 
   const [formData, setFormData] = useState({
     FirstName: '',
@@ -25,18 +29,55 @@ const Page = () => {
       [name]: value,
     }))
   }
-  const getAllChild = useCallback(async () => {
-    try {
-      const child = await axios.get(
-        'http://localhost:5080/api/Parent/GetAllChil',
-        { withCredentials: true }
-      )
-      const childList = child.data?.allchildinquary || child.data?.allChildInquary || child.data || []
-      setAllChild(Array.isArray(childList) ? childList : [])
-    } catch (error) {
-      console.log(error)
+
+  const handleSendAmountChange = (childId, value) => {
+    setSendAmounts((prev) => ({
+      ...prev,
+      [childId]: value,
+    }))
+  }
+
+  const handleSendMoney = async (child) => {
+    const childId = child.id || child.Id
+    const wallet = child.wallet || child.Wallet
+    const walletId = wallet?.id || wallet?.Id
+    const amount = Number(sendAmounts[childId])
+
+    if (!amount || amount <= 0) {
+      alert('Please enter a valid amount')
+      return
     }
-  }, [])
+
+    console.log('Send money payload:', {
+      childId,
+      walletId,
+      amount,
+    })
+
+    // Add your API call here later.
+    // await axios.post('YOUR_API_URL', { childId, walletId, amount }, { withCredentials: true })
+
+    setSendAmounts((prev) => ({
+      ...prev,
+      [childId]: '',
+    }))
+    setActiveSendChildId(null)
+  }
+const getAllChild = useCallback(async () => {
+  try {
+    const child = await axios.get(
+      'http://localhost:5080/api/Parent/GetAllChil',
+      { withCredentials: true }
+    )
+
+    const childList = child.data?.allchildinquary || []
+
+    setAllChild(childList)
+  } catch (error) {
+    console.log(error)
+  }
+}, [])
+
 
   useEffect(() => {
     getAllChild()
@@ -45,7 +86,7 @@ const Page = () => {
 const handleAddChild = async (e) => {
   e.preventDefault()
 
-  if (
+   if (
     !formData.FirstName ||
     !formData.LastName ||
     !formData.BirthDate ||
@@ -53,7 +94,7 @@ const handleAddChild = async (e) => {
     !formData.Password ||
     !formData.ConfirmPassword ||
     !formData.Gender
-  ) {
+      ) {
     alert('Please fill all fields')
     return
   }
@@ -77,8 +118,6 @@ const handleAddChild = async (e) => {
       { withCredentials: true }
     )
 
-    await getAllChild()
-
     setFormData({
       FirstName: '',
       LastName: '',
@@ -90,6 +129,7 @@ const handleAddChild = async (e) => {
     })
 
     setShowForm(false)
+    await getAllChild()
 
   } catch (error) {
     console.log('Status:', error.response?.status)
@@ -100,81 +140,148 @@ const handleAddChild = async (e) => {
 
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Children Management
-        </h1>
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-medium text-blue-600">Family dashboard</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">
+            Children Management
+          </h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Manage your children profiles and wallet balances.
+          </p>
+        </div>
 
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg cursor-pointer"
+          className="w-full cursor-pointer rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 md:w-auto"
         >
           + Add Child
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allchild.map((child) => (
-          <div key={child.id || child.Id || child.Email || child.email} className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold">
-              {child.name || child.Name || `${child.FirstName || ''} ${child.LastName || ''}`.trim() || 'Child'}
-            </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {allchild.map((child) => {
+          const wallet = child.wallet || child.Wallet
+          const childId = child.id || child.Id
+          const isSendOpen = activeSendChildId === childId
 
-            <p className="text-sm text-gray-500 mb-4">{child.Gender || child.gender}</p>
+          return (
+          <div key={childId } className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div className="border-b border-slate-100 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {child.name || child.Name || `${child.FirstName || ''} ${child.LastName || ''}`.trim() || 'Child'}
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">{child.Gender || child.gender || 'N/A'}</p>
+                </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Spend:</span>
-                <span className="text-red-600 font-semibold">
-                  {/* ${child.Spend.toFixed(2)} */} 00
-                </span>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-base font-bold text-blue-700">
+                  {(child.name || child.Name || 'C').charAt(0).toUpperCase()}
+                </div>
               </div>
 
-              <div className="flex justify-between">
-                <span>Balance:</span>
-                <span className="text-green-600 font-semibold">
-                  {/* ${child.Balance.toFixed(2)} */} 00
-                </span>
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <div className="rounded-lg bg-red-50 p-3">
+                  <p className="text-xs font-medium uppercase text-red-500">Spend</p>
+                  <p className="mt-1 text-base font-bold text-red-700">
+                    ${formatAmount(wallet?.totalSpend || wallet?.TotalSpend)}
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-emerald-50 p-3">
+                  <p className="text-xs font-medium uppercase text-emerald-500">Balance</p>
+                  <p className="mt-1 text-base font-bold text-emerald-700">
+                    ${formatAmount(wallet?.balance || wallet?.Balance)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 text-sm">
-              <p>Email: {child.Email || child.email}</p>
-              <p>
-                Birth Date:{' '}
-                {child.BirthDate || child.birthDate
-                  ? new Date(child.BirthDate || child.birthDate).toLocaleDateString()
-                  : 'N/A'}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {showForm && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-blue-600 text-white p-6 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Add Child</h2>
+            <div className="space-y-3 p-5">
+              <div className="space-y-1.5 text-xs text-slate-600">
+                <p className="truncate">Email: {child.Email || child.email}</p>
+                <p>
+                  Birth Date:{' '}
+                  {child.BirthDate || child.birthDate
+                    ? new Date(child.BirthDate || child.birthDate).toLocaleDateString()
+                    : 'N/A'}
+                </p>
+              </div>
 
               <button
                 type="button"
-                className="cursor-pointer"
+                onClick={() =>
+                  setActiveSendChildId(isSendOpen ? null : childId)
+                }
+                className="w-full cursor-pointer rounded-lg bg-slate-900 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              >
+                Send Money
+              </button>
+
+              {isSendOpen && (
+                <div className="space-y-2.5 rounded-lg border border-blue-100 bg-blue-50 p-3">
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={sendAmounts[childId] || ''}
+                    onChange={(e) =>
+                      handleSendAmountChange(childId, e.target.value)
+                    }
+                    placeholder="Enter amount"
+                    className="w-full rounded-lg border border-blue-200 bg-white p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSendMoney(child)}
+                      className="flex-1 cursor-pointer rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    >
+                      Confirm
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveSendChildId(null)}
+                      className="flex-1 cursor-pointer rounded-lg bg-white py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          )
+        })}
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-slate-950/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-slate-900 text-white p-5 flex justify-between items-center">
+              <h2 className="text-lg font-bold">Add Child</h2>
+
+              <button
+                type="button"
+                className="cursor-pointer rounded-full px-2.5 py-1 text-lg transition hover:bg-white/10"
                 onClick={() => setShowForm(false)}
               >
-                ✕
+                X
               </button>
             </div>
 
-            <form onSubmit={handleAddChild} className="p-6 space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+            <form onSubmit={handleAddChild} className="p-5 space-y-3">
+              <div className="grid md:grid-cols-2 gap-3">
                 <input
                   name="FirstName"
                   value={formData.FirstName}
                   onChange={handleInputChange}
                   placeholder="First Name"
-                  className="border p-2 rounded"
+                  className="rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
 
                 <input
@@ -182,7 +289,7 @@ const handleAddChild = async (e) => {
                   value={formData.LastName}
                   onChange={handleInputChange}
                   placeholder="Last Name"
-                  className="border p-2 rounded"
+                  className="rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
@@ -191,7 +298,7 @@ const handleAddChild = async (e) => {
                 name="BirthDate"
                 value={formData.BirthDate}
                 onChange={handleInputChange}
-                className="border p-2 rounded w-full"
+                className="w-full rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
 
               <input
@@ -200,17 +307,17 @@ const handleAddChild = async (e) => {
                 value={formData.Email}
                 onChange={handleInputChange}
                 placeholder="Email"
-                className="border p-2 rounded w-full"
+                className="w-full rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-3">
                 <input
                   type="password"
                   name="Password"
                   value={formData.Password}
                   onChange={handleInputChange}
                   placeholder="Password"
-                  className="border p-2 rounded"
+                  className="rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
 
                 <input
@@ -219,7 +326,7 @@ const handleAddChild = async (e) => {
                   value={formData.ConfirmPassword}
                   onChange={handleInputChange}
                   placeholder="Confirm Password"
-                  className="border p-2 rounded"
+                  className="rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
 
@@ -227,7 +334,7 @@ const handleAddChild = async (e) => {
                 name="Gender"
                 value={formData.Gender}
                 onChange={handleInputChange}
-                className="border p-2 rounded w-full"
+                className="w-full rounded-lg border border-slate-200 p-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
@@ -235,18 +342,18 @@ const handleAddChild = async (e) => {
                 <option value="Other">Other</option>
               </select>
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 cursor-pointer bg-gray-300 py-2 rounded"
+                  className="flex-1 cursor-pointer rounded-lg bg-slate-100 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="flex-1 cursor-pointer bg-blue-600 text-white py-2 rounded"
+                  className="flex-1 cursor-pointer rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                 >
                   Add
                 </button>
