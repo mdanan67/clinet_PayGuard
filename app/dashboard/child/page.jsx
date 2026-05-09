@@ -3,11 +3,18 @@
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5080';
+const CHILDREN_API_URL = `${API_BASE_URL}/api/Parent/GetAllChil`;
+const SEND_MONEY_API_URL = `${API_BASE_URL}/api/Parent/sendmoney`;
+
 const Page = () => {
   const [showForm, setShowForm] = useState(false);
   const [allchild, setAllChild] = useState([]);
   const [activeSendChildId, setActiveSendChildId] = useState(null);
   const [sendAmounts, setSendAmounts] = useState({});
+  const [sendingChildId, setSendingChildId] = useState(null);
+  const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const formatAmount = (value) => Number(value ?? 0).toFixed(2);
 
@@ -39,8 +46,6 @@ const Page = () => {
 
   const handleSendMoney = async (child) => {
     const childId = child.id || child.Id;
-    const wallet = child.wallet || child.Wallet;
-    const walletId = wallet?.id || wallet?.Id;
     const amount = Number(sendAmounts[childId]);
 
     if (!amount || amount <= 0) {
@@ -48,24 +53,41 @@ const Page = () => {
       return;
     }
 
-    console.log('Send money payload:', {
-      childId,
-      walletId,
-      amount,
-    });
+    try {
+      setSendingChildId(childId);
+      setMessage('');
+      setErrorMessage('');
 
-    // Add your API call here later.
-    // await axios.post('YOUR_API_URL', { childId, walletId, amount }, { withCredentials: true })
+      await axios.post(
+        SEND_MONEY_API_URL,
+        {
+          childId,
+          amount,
+        },
+        { withCredentials: true }
+      );
 
-    setSendAmounts((prev) => ({
-      ...prev,
-      [childId]: '',
-    }));
-    setActiveSendChildId(null);
+      setSendAmounts((prev) => ({
+        ...prev,
+        [childId]: '',
+      }));
+      setActiveSendChildId(null);
+      setMessage('Money sent successfully');
+      await getAllChild();
+    } catch (error) {
+      console.log('Send money error:', error.response?.data || error.message);
+      setErrorMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Failed to send money'
+      );
+    } finally {
+      setSendingChildId(null);
+    }
   };
   const getAllChild = useCallback(async () => {
     try {
-      const child = await axios.get('http://localhost:5080/api/Parent/GetAllChil', {
+      const child = await axios.get(CHILDREN_API_URL, {
         withCredentials: true,
       });
 
@@ -74,6 +96,11 @@ const Page = () => {
       setAllChild(childList);
     } catch (error) {
       console.log(error);
+      setErrorMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Failed to load children'
+      );
     }
   }, []);
 
@@ -104,7 +131,7 @@ const Page = () => {
 
     try {
       await axios.post(
-        'http://localhost:5080/api/User/childRegistration',
+        `${API_BASE_URL}/api/User/childRegistration`,
         {
           firstName: formData.FirstName,
           lastName: formData.LastName,
@@ -127,10 +154,16 @@ const Page = () => {
       });
 
       setShowForm(false);
+      setMessage('Child added successfully');
       await getAllChild();
     } catch (error) {
       console.log('Status:', error.response?.status);
       console.log('Backend error:', error.response?.data);
+      setErrorMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Failed to add child'
+      );
     }
   };
 
@@ -152,6 +185,18 @@ const Page = () => {
           + Add Child
         </button>
       </div>
+
+      {message && (
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          {message}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {errorMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {allchild.map((child) => {
@@ -235,15 +280,17 @@ const Page = () => {
                       <button
                         type="button"
                         onClick={() => handleSendMoney(child)}
-                        className="flex-1 cursor-pointer rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                        disabled={sendingChildId === childId}
+                        className="flex-1 cursor-pointer rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Confirm
+                        {sendingChildId === childId ? 'Sending...' : 'Confirm'}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setActiveSendChildId(null)}
-                        className="flex-1 cursor-pointer rounded-lg bg-white py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100"
+                        disabled={sendingChildId === childId}
+                        className="flex-1 cursor-pointer rounded-lg bg-white py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Cancel
                       </button>
