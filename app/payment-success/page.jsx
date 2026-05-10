@@ -4,10 +4,14 @@ import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5080';
+
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const paymentType = searchParams.get('type');
   const [status, setStatus] = useState('Verifying your payment...');
   const [error, setError] = useState('');
 
@@ -20,8 +24,13 @@ export default function PaymentSuccessPage() {
       }
 
       try {
+        const verifyUrl =
+          paymentType === 'child-payment'
+            ? `${API_BASE_URL}/api/Child/VerifyPaymentSession`
+            : `${API_BASE_URL}/api/Payment/verify-session`;
+
         const response = await axios.get(
-          'http://localhost:5080/api/Payment/verify-session',
+          verifyUrl,
           {
             params: { sessionId },
             withCredentials: true,
@@ -30,7 +39,7 @@ export default function PaymentSuccessPage() {
 
         setStatus(
           response.data?.message ||
-            `Payment successful. Added $${Number(response.data?.amount || 0).toFixed(2)}.`
+            `Payment successful. Amount $${Number(response.data?.amount || 0).toFixed(2)}.`
         );
 
         setTimeout(() => {
@@ -47,7 +56,7 @@ export default function PaymentSuccessPage() {
     };
 
     verifyPayment();
-  }, [router, sessionId]);
+  }, [router, sessionId, paymentType]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4">

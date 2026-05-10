@@ -24,9 +24,9 @@ export const dashboardConfig = {
   child: {
     sidebarItems: [
       { label: 'Dashboard', href: '/dashboard', icon: 'grid' },
-      { label: 'Wallet', href: '/dashboard/wallet', icon: 'wallet' },
-      // { label: 'Ask Ai', href: '/dashboard/askai', icon: 'shield' },
-      { label: 'Limit', href: '/dashboard/goals', icon: 'target' },
+      { label: 'recent-transactions', href: '/dashboard/recent-transactions', icon: 'receipt' },
+      { label: 'Message', href: '/dashboard/messanger', icon: 'card' },
+      { label: 'Expense Limits', href: '/dashboard/ExpenseLimits', icon: 'chart' },
     ],
   },
 };
