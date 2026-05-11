@@ -56,6 +56,7 @@ const ChildBalance = () => {
   const [fetchingWallet, setFetchingWallet] = useState(true);
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -96,25 +97,53 @@ const ChildBalance = () => {
     loadWalletStatus();
   }, []);
 
-  const handleRequestMoney = (event) => {
+  const handleRequestMoney = async (event) => {
     event.preventDefault();
 
     const requestAmount = Number(amount);
+    setMessage('');
+    setErrorMessage('');
 
     if (!amount || Number.isNaN(requestAmount) || requestAmount <= 0) {
-      setMessage('Please enter a valid amount.');
+      setErrorMessage('Please enter a valid amount.');
       return;
     }
 
     if (!reason.trim()) {
-      setMessage('Please write a reason for the request.');
+      setErrorMessage('Please write a reason for the request.');
       return;
     }
 
-    setMessage('Money request is ready to send to parent.');
-    setAmount('');
-    setReason('');
-    setShowRequestForm(false);
+    try {
+      setSubmittingRequest(true);
+
+      await axios.post(
+        `${API_BASE_URL}/api/Child/FundRequests`,
+        {
+          amount: requestAmount,
+          reason: reason.trim(),
+        },
+        { withCredentials: true }
+      );
+
+      setMessage('Money request sent to parent.');
+      setAmount('');
+      setReason('');
+      setShowRequestForm(false);
+    } catch (error) {
+      console.error('Money request error:', error);
+
+      setErrorMessage(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.response?.data?.title ||
+          error.response?.data?.detail ||
+          error.message ||
+          'Failed to send money request.'
+      );
+    } finally {
+      setSubmittingRequest(false);
+    }
   };
 
   const handleMakePayment = async (event) => {
@@ -303,6 +332,7 @@ const ChildBalance = () => {
                     setAmount('');
                     setReason('');
                   }}
+                  disabled={submittingRequest}
                   className="flex-1 cursor-pointer rounded-lg bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
                 >
                   Cancel
@@ -310,9 +340,10 @@ const ChildBalance = () => {
 
                 <button
                   type="submit"
-                  className="flex-1 cursor-pointer rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-700 active:scale-[0.98]"
+                  disabled={submittingRequest}
+                  className="flex-1 cursor-pointer rounded-lg bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Submit
+                  {submittingRequest ? 'Sending...' : 'Submit'}
                 </button>
               </div>
             </form>
