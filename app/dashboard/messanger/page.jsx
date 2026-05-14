@@ -1,13 +1,13 @@
 import FundRequest from '@/components/FundRequest/FundRequest';
-import React from 'react';
+import Messaging from '@/components/Messaging/Messaging';
 
-const page = () => {
+const Page = () => {
   return (
-    <div>
-      Working
-      <FundRequest></FundRequest>
-    </div>
+    <>
+      <FundRequest />
+
+      <Messaging />
+    </>
   );
 };
-
-export default page;
+export default Page;
