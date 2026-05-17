@@ -8,10 +8,12 @@ function cn(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function DashboardSidebar({ open, onClose, role = 'parent' }) {
+export default function DashboardSidebar({ open, onClose, role = 'parent', user }) {
   const pathname = usePathname();
   const currentRole = normalizeRole(role);
   const { sidebarItems = [] } = getDashboardConfig(currentRole);
+  const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
+  const profileImage = user?.profileImage || '';
 
   return (
     <>
@@ -90,15 +92,29 @@ export default function DashboardSidebar({ open, onClose, role = 'parent' }) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-slate-200 p-3 space-y-2">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
-              <span>❓</span>
-              Support
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
-              <span>⚙️</span>
-              Settings
-            </button>
+          <div className="border-t border-slate-200 p-3">
+            <Link
+              href="/dashboard/user-profile"
+              onClick={() => onClose()}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition hover:bg-slate-100"
+            >
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt={user?.name || 'User'}
+                  className="h-10 w-10 rounded-full object-cover ring-1 ring-slate-200"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white">
+                  {userInitial}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {user?.name || 'User'}
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
       </aside>

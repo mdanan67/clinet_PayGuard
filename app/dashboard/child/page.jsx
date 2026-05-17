@@ -304,7 +304,7 @@ const Page = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-slate-950/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div className="fixed bottom-0 left-0 right-0 top-16 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm md:left-64">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="bg-slate-900 text-white p-5 flex justify-between items-center">
               <h2 className="text-lg font-bold">Add Child</h2>

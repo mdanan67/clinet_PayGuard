@@ -16,7 +16,7 @@ export const dashboardConfig = {
       { label: 'Dashboard', href: '/dashboard', icon: 'grid' },
       { label: 'Children', href: '/dashboard/child', icon: 'users' },
       { label: 'Message', href: '/dashboard/messanger', icon: 'card' },
-      // { label: 'Ask Ai', href: '/dashboard/askai', icon: 'shield' },
+      { label: 'FundRequests', href: '/dashboard/FundRequests', icon: 'shield' },
       { label: 'Set Limit', href: '/dashboard/set_limit', icon: 'chart' },
       { label: 'Transactions', href: '/dashboard/transaction', icon: 'receipt' },
     ],

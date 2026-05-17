@@ -7,7 +7,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5
 
 const CHILDREN_API_URL = `${API_BASE_URL}/api/Parent/GetAllChil`;
 const SPENDING_LIMIT_API_URL = `${API_BASE_URL}/api/Parent/SetSpendingLimit`;
-const getSpendingLimitApiUrl = (childId) => `${API_BASE_URL}/api/Parent/GetSpendingLimit/${childId}`;
+const getSpendingLimitApiUrl = (childId) =>
+  `${API_BASE_URL}/api/Parent/GetSpendingLimit/${childId}`;
 
 const initialCategoryLimits = [
   { id: 1, name: 'Food', field: 'food', amount: 0 },
@@ -75,9 +76,7 @@ const Page = () => {
     } catch (error) {
       console.error('Children load error:', error);
       setErrorMessage(
-        error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Failed to load children'
+        error.response?.data?.error || error.response?.data?.message || 'Failed to load children'
       );
     } finally {
       setLoadingChildren(false);
@@ -197,154 +196,164 @@ const Page = () => {
   };
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Set Spending Limits</h1>
-        <p className="mt-2 text-sm text-gray-500">
-          Select a child and manage how much can be spent in each category.
-        </p>
-      </div>
+    <div className="-mx-4 -my-5 min-h-[calc(100vh-4rem)] px-3 w-[calc(100%+2rem)] bg-slate-50 sm:-mx-6 sm:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]">
+      <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col bg-slate-50 ">
+        <div className="border-b border-slate-200 bg-white py-5 pr-4 sm:pr-6 lg:pr-8  py-2">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
+            Spending Controls
+          </p>
+          <h1 className="mt-1 text-xl font-bold leading-tight text-slate-950">
+            Manage category budgets for your child
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Select a child, review their current limits, and update how much they can spend by
+            category.
+          </p>
+        </div>
 
-      <div className="mb-6 max-w-md">
-        <label className="mb-2 block text-sm font-semibold text-gray-700" htmlFor="child">
-          Child
-        </label>
-        <select
-          id="child"
-          value={selectedChildId}
-          onChange={(e) => {
-            setSelectedChildId(e.target.value);
-            setEditingId(null);
-            setEditAmount('');
-            setMessage('');
-            setErrorMessage('');
-          }}
-          disabled={loadingChildren || children.length === 0}
-          className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100"
-        >
-          <option value="">
-            {loadingChildren
-              ? 'Loading children...'
-              : children.length === 0
-                ? 'No child found'
-                : 'Select child'}
-          </option>
-
-          {children.map((child) => {
-            const childId = getChildId(child);
-
-            return (
-              <option key={childId} value={childId}>
-                {getChildName(child)}
+        <div className="min-h-0 flex-1 py-5 pr-4 sm:pr-5">
+          <div className="mb-6 max-w-md ">
+            <label className="mb-2 block text-sm font-semibold text-gray-700" htmlFor="child">
+              Child
+            </label>
+            <select
+              id="child"
+              value={selectedChildId}
+              onChange={(e) => {
+                setSelectedChildId(e.target.value);
+                setEditingId(null);
+                setEditAmount('');
+                setMessage('');
+                setErrorMessage('');
+              }}
+              disabled={loadingChildren || children.length === 0}
+              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100"
+            >
+              <option value="">
+                {loadingChildren
+                  ? 'Loading children...'
+                  : children.length === 0
+                    ? 'No child found'
+                    : 'Select child'}
               </option>
-            );
-          })}
-        </select>
-      </div>
 
-      {!selectedChildId && !loadingChildren && (
-        <div className="mb-5 rounded border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
-          Select a child to view and edit spending limits.
-        </div>
-      )}
-
-      {selectedChildId && (
-        <div className="mb-5 rounded border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          {loadingLimit
-            ? 'Loading current spending limit...'
-            : `Current spending limit for ${getChildName(selectedChild)}.`}
-        </div>
-      )}
-
-      {selectedChildId && (
-        <>
-          {message && (
-            <div className="mb-5 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-              {message}
-            </div>
-          )}
-
-          {errorMessage && (
-            <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              {errorMessage}
-            </div>
-          )}
-
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="grid grid-cols-[1fr_140px_180px] gap-4 bg-gray-100 px-6 py-4 text-sm font-semibold text-gray-600">
-              <span>Category</span>
-              <span>Limit</span>
-              <span className="text-right">Action</span>
-            </div>
-
-            <div className="divide-y divide-gray-100">
-              {categoryLimits.map((category) => {
-                const isEditing = editingId === category.id;
+              {children.map((child) => {
+                const childId = getChildId(child);
 
                 return (
-                  <div
-                    key={category.id}
-                    className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-[1fr_140px_180px] md:items-center"
-                  >
-                    <div>
-                      <h2 className="font-semibold text-gray-800">{category.name}</h2>
-                      <p className="text-sm text-gray-500">Monthly spending category</p>
-                    </div>
-
-                    <div>
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={editAmount}
-                          onChange={(e) => setEditAmount(e.target.value)}
-                          className="w-full rounded border border-gray-300 px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none"
-                        />
-                      ) : (
-                        <span className="font-bold text-gray-900">${category.amount}</span>
-                      )}
-                    </div>
-
-                    <div className="flex justify-start gap-3 md:justify-end">
-                      {isEditing ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleSave(category)}
-                            disabled={savingId === category.id || loadingLimit}
-                            className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {savingId === category.id ? 'Saving...' : 'Save'}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={handleCancel}
-                            disabled={savingId === category.id}
-                            className="rounded bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(category)}
-                          disabled={loadingLimit}
-                          className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <option key={childId} value={childId}>
+                    {getChildName(child)}
+                  </option>
                 );
               })}
-            </div>
+            </select>
           </div>
-        </>
-      )}
+
+          {!selectedChildId && !loadingChildren && (
+            <div className="mb-5 rounded border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
+              Select a child to view and edit spending limits.
+            </div>
+          )}
+
+          {selectedChildId && (
+            <div className="mb-5 rounded border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              {loadingLimit
+                ? 'Loading current spending limit...'
+                : `Current spending limit for ${getChildName(selectedChild)}.`}
+            </div>
+          )}
+
+          {selectedChildId && (
+            <>
+              {message && (
+                <div className="mb-5 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                  {message}
+                </div>
+              )}
+
+              {errorMessage && (
+                <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {errorMessage}
+                </div>
+              )}
+
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="grid grid-cols-[1fr_140px_180px] gap-4 bg-gray-100 px-6 py-4 text-sm font-semibold text-gray-600">
+                  <span>Category</span>
+                  <span>Limit</span>
+                  <span className="text-right">Action</span>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {categoryLimits.map((category) => {
+                    const isEditing = editingId === category.id;
+
+                    return (
+                      <div
+                        key={category.id}
+                        className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-[1fr_140px_180px] md:items-center"
+                      >
+                        <div>
+                          <h2 className="font-semibold text-gray-800">{category.name}</h2>
+                          {/* <p className="text-sm text-gray-500">Monthly spending category</p> */}
+                        </div>
+
+                        <div>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={editAmount}
+                              onChange={(e) => setEditAmount(e.target.value)}
+                              className="w-full rounded border border-gray-300 px-3 py-2 text-gray-800 focus:border-blue-500 focus:outline-none"
+                            />
+                          ) : (
+                            <span className="font-bold text-gray-900">${category.amount}</span>
+                          )}
+                        </div>
+
+                        <div className="flex justify-start gap-3 md:justify-end">
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleSave(category)}
+                                disabled={savingId === category.id || loadingLimit}
+                                className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {savingId === category.id ? 'Saving...' : 'Save'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleCancel}
+                                disabled={savingId === category.id}
+                                className="rounded bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(category)}
+                              disabled={loadingLimit}
+                              className="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

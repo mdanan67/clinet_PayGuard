@@ -1,8 +1,9 @@
 'use client';
 
+import { STORAGE_KEY, normalizeRole } from '@/components/dashboard/dashboardConfig';
+import History from '@/components/History/History';
 import ChildBalance from '@/Pages/ChildBalance/ChildBalance';
 import ParentBalance from '@/Pages/ParentBalances/ParentBalance';
-import { STORAGE_KEY, normalizeRole } from '@/components/dashboard/dashboardConfig';
 import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
@@ -23,5 +24,16 @@ export default function DashboardPage() {
     }
   }, []);
 
-  return role === 'child' ? <ChildBalance /> : <ParentBalance />;
+  return (
+    <div className="w-full min-w-0 space-y-5">
+      <div className="w-full min-w-0">
+        {role === 'child' ? <ChildBalance /> : <ParentBalance />}
+      </div>
+      {role === 'parent' && (
+        <div className="w-full min-w-0">
+          <History />
+        </div>
+      )}
+    </div>
+  );
 }

@@ -26,15 +26,16 @@ export default function DashboardLayout({ children, user }) {
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           role={user?.role}
+          user={user}
         />
 
-        <main className="flex-1 min-w-0">
+        <main className="min-w-0 flex-1 w-full">
           <DashboardTopbar
             onMenuClick={() => setSidebarOpen(true)}
             user={user}
           />
 
-          <div className="relative min-h-[calc(100vh-80px)] px-4 md:px-6 py-5 space-y-4">
+          <div className="relative min-h-[calc(100vh-4rem)] px-4 py-5 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>

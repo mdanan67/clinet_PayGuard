@@ -18,21 +18,41 @@ const formatDate = (date) => {
 
 const shortId = (id) => {
   if (!id) {
-    return '-';
+    return 'N/A';
   }
 
   return `${id.slice(0, 8)}...`;
 };
 
-const EmptyValue = () => <span className="text-slate-400">null</span>;
+const EmptyValue = () => <span className="text-slate-400">N/A</span>;
+
+const PersonName = ({ name, fallback }) => (
+  <div className="min-w-[120px]">
+    <p className="truncate text-sm font-bold text-slate-900">
+      {name || <EmptyValue />}
+    </p>
+    {!name && (
+      <TruncatedId value={fallback} />
+    )}
+  </div>
+);
+
+const TruncatedId = ({ value }) => (
+  <span className="block max-w-[170px] truncate font-mono text-xs text-slate-600" title={value || 'N/A'}>
+    {value ? shortId(value) : <EmptyValue />}
+  </span>
+);
 
 const Transection = ({
   id,
+  senderName,
   senderWalletId,
   receiverWalletId,
   amount,
+  category,
   type,
   status,
+  stripeCheckoutSessionId,
   stripePaymentIntentId,
   stripeChargeId,
   failureReason,
@@ -43,56 +63,57 @@ const Transection = ({
   const isFailed = status === 'Failed';
 
   return (
-    <tr className="group border-b border-slate-100 bg-white text-base transition hover:bg-slate-50/80">
-      <td className="px-4 py-5 whitespace-nowrap">
-        <div className="font-bold text-slate-900">{shortId(id)}</div>
-        <div className="mt-1 text-sm text-slate-400">Transaction ID</div>
+    <tr className="border-b border-slate-100 bg-white text-sm transition last:border-b-0 hover:bg-slate-50">
+      <td className="px-4 py-4">
+        <TruncatedId value={id} />
       </td>
 
-      <td className="px-4 py-5 whitespace-nowrap">
-        <span className="font-mono text-sm font-semibold text-slate-600">
-          {shortId(senderWalletId)}
-        </span>
+      <td className="px-4 py-4">
+        <PersonName name={senderName} fallback={senderWalletId} />
       </td>
 
-      <td className="px-4 py-5 whitespace-nowrap">
-        <span className="font-mono text-sm font-semibold text-slate-600">
-          {shortId(receiverWalletId)}
-        </span>
+      <td className="px-4 py-4">
+        <TruncatedId value={receiverWalletId} />
       </td>
 
-      <td className="px-4 py-5 whitespace-nowrap">
-        <span className={`font-bold ${isFailed ? 'text-red-600' : 'text-slate-950'}`}>
-          {formatAmount(amount)}
-        </span>
+      <td className={`px-4 py-4 font-bold ${isFailed ? 'text-red-600' : 'text-slate-950'}`}>
+        {formatAmount(amount)}
       </td>
 
-      <td className="px-4 py-5 whitespace-nowrap">
-        <span className="rounded-md bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700">
+      <td className="px-4 py-4">
+        <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
           {type || 'Unknown'}
         </span>
       </td>
 
-      <td className="px-4 py-5 whitespace-nowrap">
-        <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm font-bold ring-1 ${statusClass}`}>
+      <td className="px-4 py-4">
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ring-1 ${statusClass}`}>
           {status || 'Unknown'}
         </span>
       </td>
 
-      <td className="px-4 py-5 whitespace-nowrap text-slate-600">{formatDate(createdAt)}</td>
-      <td className="px-4 py-5 whitespace-nowrap text-slate-500">{updatedAt ? formatDate(updatedAt) : <EmptyValue />}</td>
-      <td className="px-4 py-5 whitespace-nowrap font-mono text-sm text-slate-500">
-        {stripePaymentIntentId || <EmptyValue />}
+      <td className="px-4 py-4 text-slate-600">{category || <EmptyValue />}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-slate-600">{formatDate(createdAt)}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-slate-500">
+        {updatedAt ? formatDate(updatedAt) : <EmptyValue />}
       </td>
-      <td className="px-4 py-5 whitespace-nowrap font-mono text-sm text-slate-500">
-        {stripeChargeId || <EmptyValue />}
+
+      <td className="px-4 py-4">
+        <TruncatedId value={stripeCheckoutSessionId} />
       </td>
-      <td className="px-4 py-5 whitespace-nowrap">
-        {failureReason ? (
-          <span className="font-medium text-red-600">{failureReason}</span>
-        ) : (
-          <EmptyValue />
-        )}
+
+      <td className="px-4 py-4">
+        <TruncatedId value={stripePaymentIntentId} />
+      </td>
+
+      <td className="px-4 py-4">
+        <TruncatedId value={stripeChargeId} />
+      </td>
+
+      <td className="px-4 py-4">
+        <span className="block max-w-[220px] truncate text-sm text-red-600" title={failureReason || 'N/A'}>
+          {failureReason || <EmptyValue />}
+        </span>
       </td>
     </tr>
   );

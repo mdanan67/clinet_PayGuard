@@ -90,9 +90,9 @@ export default function ParentBalance() {
   };
 
   return (
-    <div className="w-full h-full overflow-auto bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-8 py-2">
-      <div className="w-full">
-        <div className="mb-8">
+    <div className="w-full">
+      <div className="w-full rounded-2xl bg-gradient-to-br from-slate-50 via-white to-indigo-50 p-5 sm:p-6">
+        <div className="mb-7">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
             Wallet Overview
           </p>

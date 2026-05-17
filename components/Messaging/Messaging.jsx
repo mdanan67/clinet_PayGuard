@@ -40,6 +40,7 @@ const Messaging = () => {
   const [connectionStatus, setConnectionStatus] = useState('Connecting');
   const connectionRef = useRef(null);
   const selectedConversationIdRef = useRef('');
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     selectedConversationIdRef.current = selectedConversationId;
@@ -128,9 +129,7 @@ const Messaging = () => {
       }
 
       setMessages((currentMessages) => {
-        const alreadyExists = currentMessages.some(
-          (message) => message.id === newMessage.id
-        );
+        const alreadyExists = currentMessages.some((message) => message.id === newMessage.id);
 
         if (alreadyExists) return currentMessages;
 
@@ -183,10 +182,12 @@ const Messaging = () => {
     loadMessages(selectedConversationId);
   }, [loadMessages, selectedConversationId]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, selectedConversationId]);
+
   const handleSelectContact = (contact) => {
-    const conversation = conversations.find(
-      (item) => item.otherUser?.id === contact.id
-    );
+    const conversation = conversations.find((item) => item.otherUser?.id === contact.id);
 
     setSelectedContact(contact);
     setSelectedConversationId(conversation?.id || '');
@@ -243,129 +244,185 @@ const Messaging = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-96px)] bg-slate-50 p-4 md:p-6">
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <p className="text-sm text-slate-500">
-            Chat with your linked parent or children.
-          </p>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-            {connectionStatus}
-          </span>
+    <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col bg-slate-50">
+      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-8">
+        <div>
+          {/* <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
+            Family Chat
+          </p> */}
+          {/* <h1 className="mt-1 text-2xl font-bold leading-tight text-slate-950">
+            Talk with your linked accounts
+          </h1> */}
+        </div>
+
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+          <span
+            className={`h-2 w-2 rounded-full ${
+              connectionStatus === 'Connected'
+                ? 'bg-emerald-500'
+                : connectionStatus === 'Reconnecting'
+                  ? 'bg-amber-500'
+                  : 'bg-red-500'
+            }`}
+          />
+          <span className="text-xs font-bold text-slate-600">{connectionStatus}</span>
         </div>
       </div>
 
       {errorMessage && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div className="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 sm:mx-6 lg:mx-8">
           {errorMessage}
         </div>
       )}
 
-      <div className="grid min-h-[680px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:grid-cols-[320px_1fr]">
-        <aside className="border-b border-slate-200 bg-white lg:border-b-0 lg:border-r">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-            <h2 className="text-sm font-bold text-slate-900">Contacts</h2>
-            <button
-              type="button"
-              onClick={loadContactsAndConversations}
-              disabled={loadingContacts}
-              className="cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loadingContacts ? 'Loading' : 'Refresh'}
-            </button>
+      <div className="grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="flex min-h-0 flex-col border-b border-slate-200 bg-white lg:border-b-0 lg:border-r">
+          <div className="border-b border-slate-100 px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-950">Contacts</h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
+                  {contacts.length} linked {contacts.length === 1 ? 'contact' : 'contacts'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={loadContactsAndConversations}
+                disabled={loadingContacts}
+                className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loadingContacts ? 'Loading' : 'Refresh'}
+              </button>
+            </div>
           </div>
 
           {loadingContacts ? (
-            <div className="p-4 text-sm font-medium text-slate-500">
-              Loading contacts...
+            <div className="space-y-3 p-4">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full bg-slate-100" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 rounded bg-slate-100" />
+                    <div className="h-3 w-1/2 rounded bg-slate-100" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : contacts.length === 0 ? (
-            <div className="p-4 text-sm font-medium text-slate-500">
-              No linked contacts found.
+            <div className="grid flex-1 place-items-center px-5 text-center">
+              <div>
+                <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-sm font-bold text-slate-500">
+                  0
+                </div>
+                <p className="mt-3 text-sm font-bold text-slate-800">No contacts yet</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Linked parent or child accounts will show up here.
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="max-h-[620px] overflow-y-auto p-2">
-              {contacts.map((contact) => {
-                const conversation = conversations.find(
-                  (item) => item.otherUser?.id === contact.id
-                );
-                const isActive = selectedContact?.id === contact.id;
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+              <div className="space-y-1.5">
+                {contacts.map((contact) => {
+                  const conversation = conversations.find(
+                    (item) => item.otherUser?.id === contact.id
+                  );
+                  const isActive = selectedContact?.id === contact.id;
 
-                return (
-                  <button
-                    type="button"
-                    key={contact.id}
-                    onClick={() => handleSelectContact(contact)}
-                    className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-left transition ${
-                      isActive
-                        ? 'bg-blue-50 ring-1 ring-blue-100'
-                        : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-900 text-sm font-bold text-white">
-                      {getInitial(contact.name)}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-bold text-slate-900">
-                          {contact.name || 'User'}
-                        </p>
-                        <span className="shrink-0 text-[11px] font-medium text-slate-400">
-                          {formatTime(conversation?.lastMessage?.sentAt)}
-                        </span>
+                  return (
+                    <button
+                      type="button"
+                      key={contact.id}
+                      onClick={() => handleSelectContact(contact)}
+                      className={`flex w-full cursor-pointer items-center gap-3 rounded-xl p-3 text-left transition ${
+                        isActive ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div
+                        className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold ${
+                          isActive ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-white'
+                        }`}
+                      >
+                        {getInitial(contact.name)}
                       </div>
-                      <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
-                        {conversation?.lastMessage?.body || contact.email || contact.role}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="truncate text-sm font-bold text-slate-950">
+                            {contact.name || 'User'}
+                          </p>
+                          <span className="shrink-0 text-[11px] font-semibold text-slate-400">
+                            {formatTime(conversation?.lastMessage?.sentAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                          {conversation?.lastMessage?.body || contact.email || contact.role}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </aside>
 
-        <section className="flex min-h-[680px] flex-col">
-          <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+        <section className="flex min-h-0 flex-col bg-slate-50">
+          <div className="flex min-h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3">
             {selectedContact ? (
-              <>
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-blue-600 text-sm font-bold text-white">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white">
                   {getInitial(selectedContact.name)}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="truncate text-base font-bold text-slate-900">
+                  <h2 className="truncate text-base font-bold text-slate-950">
                     {selectedContact.name || 'User'}
                   </h2>
                   <p className="truncate text-xs font-medium text-slate-500">
                     {selectedContact.email || selectedContact.role}
                   </p>
                 </div>
-              </>
+              </div>
             ) : (
               <div>
-                <h2 className="text-base font-bold text-slate-900">Select a contact</h2>
-                <p className="text-xs font-medium text-slate-500">
-                  Choose someone from the left side to start messaging.
+                <h2 className="text-base font-bold text-slate-950">Select a contact</h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
+                  Choose someone to open the conversation.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-5 py-5">
             {!selectedContact ? (
-              <div className="grid h-full place-items-center text-sm font-medium text-slate-500">
-                No conversation selected.
+              <div className="grid h-full place-items-center text-center">
+                <div className="max-w-sm">
+                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-xl font-bold text-indigo-600 shadow-sm">
+                    M
+                  </div>
+                  <p className="mt-4 text-base font-bold text-slate-800">
+                    Your conversations live here
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Select a contact from the left panel to read and send messages.
+                  </p>
+                </div>
               </div>
             ) : loadingMessages ? (
-              <div className="text-sm font-medium text-slate-500">Loading messages...</div>
+              <div className="space-y-3">
+                <div className="h-12 w-52 rounded-2xl rounded-bl-md bg-white shadow-sm" />
+                <div className="ml-auto h-12 w-64 rounded-2xl rounded-br-md bg-indigo-100" />
+                <div className="h-12 w-44 rounded-2xl rounded-bl-md bg-white shadow-sm" />
+              </div>
             ) : messages.length === 0 ? (
               <div className="grid h-full place-items-center text-center">
-                <div>
-                  <p className="text-sm font-bold text-slate-700">No messages yet</p>
-                  <p className="mt-1 text-xs font-medium text-slate-500">
-                    Send the first message to start this conversation.
+                <div className="max-w-sm">
+                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-indigo-50 text-base font-bold text-indigo-600">
+                    {getInitial(selectedContact.name)}
+                  </div>
+                  <p className="mt-4 text-base font-bold text-slate-800">Start a conversation</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Send a message to {selectedContact.name || 'this contact'}.
                   </p>
                 </div>
               </div>
@@ -380,18 +437,18 @@ const Messaging = () => {
                       className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg px-4 py-2 shadow-sm ${
+                        className={`max-w-[min(72%,680px)] rounded-2xl px-4 py-2.5 shadow-sm ${
                           isMine
-                            ? 'bg-blue-600 text-white'
-                            : 'border border-slate-200 bg-white text-slate-800'
+                            ? 'rounded-br-md bg-indigo-600 text-white shadow-indigo-100'
+                            : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'
                         }`}
                       >
                         <p className="whitespace-pre-wrap break-words text-sm leading-6">
                           {message.body}
                         </p>
                         <p
-                          className={`mt-1 text-right text-[11px] font-medium ${
-                            isMine ? 'text-blue-100' : 'text-slate-400'
+                          className={`mt-1 text-right text-[11px] font-semibold ${
+                            isMine ? 'text-indigo-100' : 'text-slate-400'
                           }`}
                         >
                           {formatTime(message.sentAt)}
@@ -400,24 +457,31 @@ const Messaging = () => {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>
 
-          <form onSubmit={handleSendMessage} className="border-t border-slate-100 bg-white p-4">
-            <div className="flex gap-3">
+          <form onSubmit={handleSendMessage} className="border-t border-slate-200 bg-white p-4">
+            <div className="flex items-end gap-3">
               <textarea
                 value={messageBody}
                 onChange={(event) => setMessageBody(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSendMessage(event);
+                  }
+                }}
                 placeholder="Write a message..."
                 disabled={!selectedContact || sending}
-                rows={2}
-                className="min-h-12 flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                rows={1}
+                className="max-h-32 min-h-12 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-100"
               />
               <button
                 type="submit"
                 disabled={!selectedContact || sending || !messageBody.trim()}
-                className="h-12 shrink-0 cursor-pointer rounded-lg bg-blue-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-12 shrink-0 cursor-pointer rounded-xl bg-indigo-600 px-5 text-sm font-bold text-white shadow-sm shadow-indigo-100 transition hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {sending ? 'Sending...' : 'Send'}
               </button>

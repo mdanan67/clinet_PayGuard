@@ -1,9 +1,12 @@
 'use client';
 import Navbar from '@/Pages/Navbar/Navbar';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function ParentRegistration() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -15,6 +18,42 @@ export default function ParentRegistration() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const renderPasswordIcon = (isVisible) =>
+    isVisible ? (
+      <svg
+        aria-hidden="true"
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M2 2l20 20" />
+        <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+        <path d="M7.4 7.4C4.6 8.8 2.7 11.4 2 12c1.8 2.5 5.2 6 10 6 1.5 0 2.9-.3 4.1-.9" />
+        <path d="M14.5 5.2C13.7 5.1 12.9 5 12 5 7 5 3.6 8.5 2 12" />
+        <path d="M19.1 8.6c1.2 1 2.2 2.2 2.9 3.4-.6.8-1.5 1.8-2.6 2.7" />
+      </svg>
+    ) : (
+      <svg
+        aria-hidden="true"
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,7 +77,8 @@ export default function ParentRegistration() {
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password)) {
-      newErrors.password = 'Must include uppercase, lowercase, number & special character (@$!%*?&)';
+      newErrors.password =
+        'Must include uppercase, lowercase, number & special character (@$!%*?&)';
     }
 
     if (!formData.confirmPassword) {
@@ -80,6 +120,7 @@ export default function ParentRegistration() {
         confirmPassword: '',
       });
       setErrors({});
+      router.push('/user/login');
     } catch (error) {
       console.log('Full error:', error.response?.data);
 
@@ -106,9 +147,8 @@ export default function ParentRegistration() {
     <div className="min-h-screen bg-slate-100">
       <Navbar />
 
-      <div className="flex items-center justify-center px-4 py-16">
+      <div className="flex items-center justify-center mt-10 px-4 py-16">
         <div className="grid w-full max-w-6xl overflow-hidden rounded-3xl bg-white shadow-xl md:grid-cols-2">
-
           {/* Left panel — hidden on mobile, visible md+ */}
           <div className="hidden md:flex flex-col justify-center bg-slate-900 p-10 text-white">
             <span className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1 text-sm">
@@ -157,7 +197,6 @@ export default function ParentRegistration() {
               </p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-
                 {/* First Name + Last Name — side by side */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -203,14 +242,24 @@ export default function ParentRegistration() {
 
                 {/* Password — full width */}
                 <div>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Password"
-                    className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Password"
+                      className="w-full rounded-xl border px-4 py-3 pr-20 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {renderPasswordIcon(showPassword)}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p className="mt-1 text-sm text-red-500">{errors.password}</p>
                   )}
@@ -218,14 +267,26 @@ export default function ParentRegistration() {
 
                 {/* Confirm Password — full width */}
                 <div>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Confirm Password"
-                    className="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Confirm Password"
+                      className="w-full rounded-xl border px-4 py-3 pr-20 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      aria-label={
+                        showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                      }
+                    >
+                      {renderPasswordIcon(showConfirmPassword)}
+                    </button>
+                  </div>
                   {errors.confirmPassword && (
                     <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
                   )}
@@ -251,7 +312,6 @@ export default function ParentRegistration() {
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </div>
